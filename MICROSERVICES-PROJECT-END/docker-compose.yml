@@ -1,0 +1,51 @@
+services:
+  customers-db:
+    image: mongo:7
+    container_name: c-customers-db
+    volumes:
+      - customers-data:/data/db
+
+  customers:
+    build: ./customers
+    container_name: c-customers
+    depends_on:
+      - customers-db
+    environment:
+      PORT: 8001
+      DB_URL: mongodb://customers-db:27017/customers
+    ports:
+      - "8001:8001"
+
+  products-db:
+    image: mongo:7
+    container_name: c-products-db
+    volumes:
+      - products-data:/data/db
+
+  products:
+    build: ./products
+    container_name: c-products
+    depends_on:
+      - products-db
+    environment:
+      PORT: 8002
+      DB_URL: mongodb://products-db:27017/products
+    ports:
+      - "8002:8002"
+
+  shopping:
+    build: ./shopping
+    container_name: c-shopping
+    depends_on:
+      - customers
+      - products
+    environment:
+      PORT: 8003
+      CUSTOMER_SERVICE_URL: http://customers:8001
+      PRODUCT_SERVICE_URL: http://products:8002
+    ports:
+      - "8003:8003"
+
+volumes:
+  customers-data:
+  products-data:
