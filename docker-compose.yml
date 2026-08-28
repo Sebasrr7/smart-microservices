@@ -1,9 +1,12 @@
 services:
+
   customers-db:
     image: mongo:7
     container_name: c-customers-db
     volumes:
       - customers-data:/data/db
+    networks:
+      - smart-microservices
 
   customers:
     build: ./customers
@@ -13,14 +16,19 @@ services:
     environment:
       PORT: 8001
       DB_URL: mongodb://customers-db:27017/customers
+      APP_SECRET: dev-secret-change-me
     ports:
       - "8001:8001"
+    networks:
+      - smart-microservices
 
   products-db:
     image: mongo:7
     container_name: c-products-db
     volumes:
       - products-data:/data/db
+    networks:
+      - smart-microservices
 
   products:
     build: ./products
@@ -32,6 +40,16 @@ services:
       DB_URL: mongodb://products-db:27017/products
     ports:
       - "8002:8002"
+    networks:
+      - smart-microservices
+
+  shopping-db:
+    image: mongo:7
+    container_name: c-shopping-db
+    volumes:
+      - shopping-data:/data/db
+    networks:
+      - smart-microservices
 
   shopping:
     build: ./shopping
@@ -39,13 +57,40 @@ services:
     depends_on:
       - customers
       - products
+      - shopping-db
     environment:
       PORT: 8003
-      CUSTOMER_SERVICE_URL: http://customers:8001
+      CUSTOMERS_URL: http://customers:8001
       PRODUCT_SERVICE_URL: http://products:8002
+      APP_SECRET: dev-secret-change-me
+      DB_URL: mongodb://shopping-db:27017/shopping
     ports:
       - "8003:8003"
+    networks:
+      - smart-microservices
+
+  gateway:
+    build: ./gateway
+    container_name: c-gateway
+    depends_on:
+      - customers
+      - products
+      - shopping
+    environment:
+      PORT: 8000
+      CUSTOMERS_URL: http://customers:8001
+      PRODUCTS_URL: http://products:8002
+      SHOPPING_URL: http://shopping:8003
+      FRONTEND_URL: "*"
+    ports:
+      - "8000:8000"
+    networks:
+      - smart-microservices
+
+networks:
+  smart-microservices:
 
 volumes:
   customers-data:
   products-data:
+  shopping-data:

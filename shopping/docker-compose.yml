@@ -1,9 +1,0 @@
-services:
-  shopping:
-    build: .
-    ports:
-      - "8003:8003"
-    environment:
-      PORT: 8003
-      CUSTOMER_SERVICE_URL: http://customers:8001
-    restart: unless-stopped
